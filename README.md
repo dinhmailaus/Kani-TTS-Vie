@@ -58,33 +58,23 @@ pip install -r requirements.txt
 
 ## Cách sử dụng
 
-### 1. Inference qua CLI
+### Local Installation
+
+Đây là cách thiết lập môi trường cục bộ, khuyến nghị sử dụng **uv** để cài đặt và chạy:
 
 ```bash
-uv run python main.py \
-  --text "Xin chào! Tôi là Kani TTS." \
-  --speaker_id "nam-mien-nam"
+# Clone repository
+git clone [https://github.com/pnnbao97/Kani-TTS-Vie.git](https://github.com/pnnbao97/Kani-TTS-Vie.git)
+cd Kani-TTS-Vie
+
+# Cài đặt dependencies (Sử dụng uv)
+uv sync
+
+# Chạy ứng dụng Gradio/FastAPI (ví dụ: FastAPI)
+uv run uvicorn server:app
 ```
 
-Kết quả sẽ được lưu thành file WAV.
-
-### 2. FastAPI + frontend tĩnh
-
-Chạy API:
-
-```bash
-uv run uvicorn server:app --host 0.0.0.0 --port 8000
-```
-
-Phục vụ frontend tĩnh:
-
-```bash
-python -m http.server 3000 --directory client
-```
-
-Client hỗ trợ `/tts` (batch) và `/stream-tts` (PCM chunked) thông qua FastAPI.
-
-### 4. Notebooks
+### Notebooks
 
 * `kani-tts-inference.ipynb` – walkthrough chi tiết token layout, sampling, trộn giọng.
 * `prepare_dataset.ipynb` – dọn dữ liệu, chuẩn hóa số, xây dựng shards.
@@ -105,6 +95,7 @@ Chào đón mọi đóng góp!
 
 Dự án này phát hành theo [Apache License 2.0](LICENSE).
 Kiểm tra giấy phép các mô hình/dataset bên thứ ba trước khi phân phối lại.
+
 
 
 
