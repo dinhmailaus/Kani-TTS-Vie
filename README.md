@@ -16,7 +16,7 @@ Kho lưu trữ này hỗ trợ cả **script chạy cục bộ** và các **demo
 
 ## Giọng đọc hỗ trợ
 
-Nghe mẫu sample tại đây: **[Mẫu Giọng Demo (Inferred)]**(https://huggingface.co/pnnbao-ump/kani-tts-370m-vie)
+Nghe mẫu sample tại đây: https://huggingface.co/pnnbao-ump/kani-tts-370m-vie
 
 | Ngôn ngữ          | Giọng đọc                                                                          |
 | ----------------- | ---------------------------------------------------------------------------------- |
@@ -91,5 +91,6 @@ Chào đón mọi đóng góp!
 
 Dự án này phát hành theo [Apache License 2.0](LICENSE).
 Kiểm tra giấy phép các mô hình/dataset bên thứ ba trước khi phân phối lại.
+
 
 
