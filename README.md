@@ -11,7 +11,7 @@ Kho lưu trữ này hỗ trợ cả **script chạy cục bộ** và các **demo
 ## Điểm nổi bật
 
 * 🚀 **Inference nhanh** – khoảng 3 giây cho đoạn văn ngắn trên GPU đơn, hệ số thời gian thực ~0.1–0.3×.
-* 🎭 **Đa giọng** – 18 giọng đọc, bao gồm Tiếng Việt, Tiếng Anh, Hàn, Đức, Tây Ban Nha, Trung và Ả Rập.
+* 🎭 **Đa giọng** – 18 giọng đọc, bao gồm Tiếng Việt, Tiếng Anh, Hàn, Đức, Tây Ban Nha, Trung và Ả Rập. Lưu ý: bạn vẫn có thể dùng các giọng nước ngoài để đọc văn bản tiếng Việt.
 * 📓 **Notebooks đi kèm** – Hướng dẫn chi tiết inference, chuẩn bị dataset, và fine-tuning LoRA trong thư mục `finetune/`.
 
 ## Giọng đọc hỗ trợ
@@ -106,6 +106,7 @@ Chào đón mọi đóng góp!
 
 Dự án này phát hành theo [Apache License 2.0](LICENSE).
 Kiểm tra giấy phép các mô hình/dataset bên thứ ba trước khi phân phối lại.
+
 
 
 
