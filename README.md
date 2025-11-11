@@ -5,7 +5,7 @@
 
 <img width="500" height="500" alt="s83RYjg6BCrSPTNNXMu4u" src="https://github.com/user-attachments/assets/11384214-379c-4872-b464-c417d3b57458" />
 
-Mô hình chuyển văn bản thành giọng nói tiếng Việt nhanh, rõ ràng và giàu biểu cảm, xây dựng trên nền tảng **Kani 370M**.
+Mô hình chuyển văn bản thành giọng nói tiếng Việt nhanh, rõ ràng và giàu biểu cảm, với điểm mạnh là inference cực nhanh và streaming mượt mà, xây dựng trên nền tảng **Kani 370M**.
 Kho lưu trữ này hỗ trợ cả **script chạy cục bộ** và các **demo UI/API** đi kèm với bản phát hành [pnnbao-ump/kani-tts-370m-vie](https://huggingface.co/pnnbao-ump/kani-tts-370m-vie) trên Hugging Face.
 
 ## Điểm nổi bật
@@ -106,6 +106,7 @@ Chào đón mọi đóng góp!
 
 Dự án này phát hành theo [Apache License 2.0](LICENSE).
 Kiểm tra giấy phép các mô hình/dataset bên thứ ba trước khi phân phối lại.
+
 
 
 
