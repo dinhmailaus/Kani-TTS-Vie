@@ -64,7 +64,7 @@ pip install -r requirements.txt
 
 ```bash
 # Clone repository
-git clone [https://github.com/pnnbao97/Kani-TTS-Vie.git](https://github.com/pnnbao97/Kani-TTS-Vie.git)
+git clone https://github.com/pnnbao97/Kani-TTS-Vie
 cd Kani-TTS-Vie
 
 # Cài đặt dependencies (Sử dụng uv)
@@ -95,6 +95,7 @@ Chào đón mọi đóng góp!
 
 Dự án này phát hành theo [Apache License 2.0](LICENSE).
 Kiểm tra giấy phép các mô hình/dataset bên thứ ba trước khi phân phối lại.
+
 
 
 
