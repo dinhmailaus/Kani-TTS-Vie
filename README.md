@@ -30,22 +30,16 @@ Nghe mẫu sample tại đây: **[Mẫu Giọng Demo (Inferred)]**(https://huggi
 
 ---
 
-
-## Cấu trúc kho lưu trữ
-
-* `main.py` – script CLI đơn giản (chạy batch).
-* `gradio_app.py` – demo Gradio Blocks với loader động + nhiều giọng.
-* `server.py` – dịch vụ FastAPI với các endpoint `/tts` và `/stream-tts`.
-* `client/index.html` – frontend tĩnh giao tiếp với server FastAPI.
-* `kani_vie/` – quản lý mô hình, helper streaming, và utilities cho audio player.
-* `finetune/` – notebooks fine-tuning LoRA và chuẩn bị dataset.
-* `requirements.txt` / `pyproject.toml` – manifest dependency (pip hoặc uv).
-
 ## Yêu cầu cài đặt
 
-1. **Python 3.12**
-2. **Driver GPU + CUDA** tương thích với PyTorch.
-3. **ffmpeg** (tùy chọn nhưng khuyến nghị cho xử lý audio).
+1.  **Python 3.12**
+2.  **GPU**
+    * **VRAM:** Cần **tối thiểu 3 GB VRAM** trở lên để inference (sinh giọng nói) được mượt mà và ổn định.
+    * **Driver & CUDA:** Cần có Driver GPU và CUDA Toolkit tương thích với phiên bản PyTorch đang được sử dụng.
+3.  **Hệ điều hành**
+    * **Linux (Khuyến nghị):** Được hỗ trợ nguyên bản.
+    * **Windows:** Bắt buộc phải sử dụng môi trường **WSL 2 (Windows Subsystem for Linux)**.
+4.  **ffmpeg**
 
 Cài đặt dependencies:
 
@@ -98,12 +92,3 @@ Chào đón mọi đóng góp!
 
 Dự án này phát hành theo [Apache License 2.0](LICENSE).
 Kiểm tra giấy phép các mô hình/dataset bên thứ ba trước khi phân phối lại.
-
-
-
-
-
-
-
-
-
