@@ -89,12 +89,6 @@ Client hỗ trợ `/tts` (batch) và `/stream-tts` (PCM chunked) thông qua Fast
 
 Mở chúng bằng môi trường Jupyter sau khi kích hoạt virtual environment.
 
-## Mẹo & Khắc phục sự cố
-
-* **Streaming chậm?** Giảm `chunk_size` hoặc dùng GPU/ổ cứng nhanh hơn.
-* **Inference không phải tiếng Việt** vẫn khả dụng; chọn giọng tương ứng (vd: `Seulgi` cho Hàn).
-* **Cảnh báo môi trường** liên quan `gradio` hay `soundfile` thường do thiếu package trong virtualenv – chạy lại `pip install -r requirements.txt`.
-
 ## Đóng góp
 
 Chào đón mọi đóng góp!
@@ -108,3 +102,4 @@ Chào đón mọi đóng góp!
 
 Dự án này phát hành theo [Apache License 2.0](LICENSE).
 Kiểm tra giấy phép các mô hình/dataset bên thứ ba trước khi phân phối lại.
+
