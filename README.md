@@ -14,6 +14,37 @@ Kho lưu trữ này hỗ trợ cả **script chạy cục bộ** và các **demo
 * 🎭 **Đa giọng** – 18 giọng đọc, bao gồm Tiếng Việt, Tiếng Anh, Hàn, Đức, Tây Ban Nha, Trung và Ả Rập. Lưu ý: bạn vẫn có thể dùng các giọng nước ngoài để đọc văn bản tiếng Việt.
 * 📓 **Notebooks đi kèm** – Hướng dẫn chi tiết inference, chuẩn bị dataset, và fine-tuning LoRA trong thư mục `finetune/`.
 
+---
+
+## 💝 Ủng hộ dự án
+
+**Kani TTS Vie** là dự án mã nguồn mở hoàn toàn miễn phí. Tuy nhiên, việc fine-tuning mô hình TTS trên **500+ giờ dữ liệu đa vùng miền** đòi hỏi chi phí GPU rất lớn.
+
+Nếu dự án này hữu ích cho bạn, hãy cân nhắc ủng hộ để tiếp tục phát triển:
+
+<div align="center">
+
+[![Buy Me a Coffee](https://img.shields.io/badge/☕_Mua_tôi_một_ly_cà_phê-FFDD00?style=for-the-badge&logo=buy-me-a-coffee&logoColor=black)](https://buymeacoffee.com/pnnbao)
+
+</div>
+
+**Sự đóng góp của bạn sẽ giúp:**
+
+- 💰 **Trang trải chi phí GPU**: Training model trên hàng trăm giờ dữ liệu tốn hàng nghìn USD
+- 🚀 **Phát triển tính năng mới**: Voice cloning, emotion control, speaking style
+- 📊 **Mở rộng dataset**: Thu thập thêm giọng đọc đa dạng (Bắc, Trung, Nam)
+- 🎯 **Nâng cao chất lượng**: Cải thiện độ tự nhiên và rõ ràng của giọng đọc
+- 🌍 **Duy trì dự án**: Cập nhật model, sửa lỗi, hỗ trợ cộng đồng
+
+<div align="center">
+
+*Mỗi đóng góp, dù nhỏ, đều có ý nghĩa rất lớn với dự án!*  
+*Cảm ơn bạn đã tin tưởng và ủng hộ!* 🙏
+
+</div>
+
+---
+
 ## Giọng đọc hỗ trợ
 
 Nghe mẫu sample tại đây: https://huggingface.co/pnnbao-ump/kani-tts-370m-vie
@@ -99,6 +130,7 @@ Chào đón mọi đóng góp!
 
 Dự án này phát hành theo [Apache License 2.0](LICENSE).
 Kiểm tra giấy phép các mô hình/dataset bên thứ ba trước khi phân phối lại.
+
 
 
 
