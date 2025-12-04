@@ -1,7 +1,8 @@
 import os
+import re
 import tempfile
 import time
-from typing import Optional, Tuple
+from typing import List, Optional, Tuple
 
 import gradio as gr
 import numpy as np
@@ -20,6 +21,11 @@ SPEAKER_CHOICES = [
     ("Không chỉ định", None),
 ]
 
+# --- Text limits ---
+MAX_TEXT_LEN = 8000          # tối đa 8000 ký tự cho toàn bộ input
+MAX_CHARS_PER_CHUNK = 250    # mỗi đoạn gửi vào mô hình
+
+
 # --- Initialize model once ---
 def _init_models():
     config = Config()
@@ -27,21 +33,76 @@ def _init_models():
     kani = KaniModel(config, player)
     return config, player, kani
 
+
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 CONFIG, PLAYER, KANI_MODEL = _init_models()
 NORMALIZER = VietnameseTTSNormalizer()
 SAMPLE_RATE = 22050
 
+
 def _save_audio(audio: np.ndarray) -> str:
-    fd, path = tempfile.mkstemp(suffix=".wav"); os.close(fd)
+    fd, path = tempfile.mkstemp(suffix=".wav")
+    os.close(fd)
     sf.write(path, audio.astype(np.float32), SAMPLE_RATE)
     return path
+
 
 def _run_standard(text: str, speaker_id: Optional[str]) -> Tuple[np.ndarray, float]:
     start = time.perf_counter()
     audio, _ = KANI_MODEL.run_model(text, speaker_id=speaker_id)
     elapsed = time.perf_counter() - start
     return audio, elapsed
+
+
+def _split_text_by_punctuation(text: str, max_chunk_len: int) -> List[str]:
+    """
+    Tách văn bản thành các đoạn nhỏ dựa trên dấu câu.
+    Ưu tiên ngắt theo . ! ? ; : … Sau đó gom lại sao cho mỗi đoạn <= max_chunk_len.
+    Nếu vẫn quá dài (ít dấu câu), fallback chia theo độ dài cố định.
+    """
+    text = text.strip()
+    if not text:
+        return []
+
+    # Tách sơ bộ theo câu, giữ lại dấu câu ở cuối câu
+    # Ví dụ: "Xin chào. Bạn khỏe không?" -> ["Xin chào.", "Bạn khỏe không?"]
+    sentence_end_re = re.compile(r"([^.!?;:…]+[.!?;:…]|\S+\s*$)", re.UNICODE)
+    sentences = [m.group(0).strip() for m in sentence_end_re.finditer(text)]
+
+    if not sentences:
+        sentences = [text]
+
+    chunks: List[str] = []
+    current = ""
+
+    for sent in sentences:
+        if not sent:
+            continue
+
+        # Nếu câu đơn đã dài hơn max_chunk_len thì cắt cứng theo độ dài
+        if len(sent) > max_chunk_len:
+            if current:
+                chunks.append(current.strip())
+                current = ""
+            for i in range(0, len(sent), max_chunk_len):
+                sub = sent[i : i + max_chunk_len].strip()
+                if sub:
+                    chunks.append(sub)
+            continue
+
+        if not current:
+            current = sent
+        elif len(current) + 1 + len(sent) <= max_chunk_len:
+            current = f"{current} {sent}"
+        else:
+            chunks.append(current.strip())
+            current = sent
+
+    if current:
+        chunks.append(current.strip())
+
+    return chunks
+
 
 # --- Main synthesis ---
 def synthesize(text: str, speaker_label: str, normalize: bool = True):
@@ -50,33 +111,61 @@ def synthesize(text: str, speaker_label: str, normalize: bool = True):
         yield None, "⚠️ Vui lòng nhập nội dung.", None
         return
 
-    if len(text) > 250:
-        yield None, f"⚠️ Văn bản quá dài ({len(text)} ký tự). Giới hạn là 250 ký tự.", None
+    if len(text) > MAX_TEXT_LEN:
+        yield None, f"⚠️ Văn bản quá dài ({len(text)} ký tự). Giới hạn là {MAX_TEXT_LEN} ký tự.", None
         return
 
     speaker_id = dict(SPEAKER_CHOICES).get(speaker_label, None)
-    processed_text = NORMALIZER.normalize(text) if normalize else text
 
     # --- mô phỏng tiến trình ---
     yield None, "⏳ Đang xử lý văn bản...", None
     time.sleep(0.8)
 
-    yield None, "🎧 Đang tạo giọng nói...", None
-    time.sleep(0.8)
+    # Tách văn bản thành các đoạn theo dấu câu
+    raw_chunks = _split_text_by_punctuation(text, MAX_CHARS_PER_CHUNK)
+    if not raw_chunks:
+        yield None, "⚠️ Không tìm thấy nội dung hợp lệ sau khi xử lý.", None
+        return
+
+    if len(raw_chunks) == 1:
+        status_msg = "🎧 Đang tạo giọng nói (1 đoạn)..."
+    else:
+        status_msg = f"🎧 Đang tạo giọng nói ({len(raw_chunks)} đoạn)..."
+
+    yield None, status_msg, None
+    time.sleep(0.5)
+
+    audios = []
+    total_elapsed = 0.0
 
     try:
-        audio, elapsed = _run_standard(processed_text, speaker_id)
+        for idx, chunk in enumerate(raw_chunks, start=1):
+            chunk_text = NORMALIZER.normalize(chunk) if normalize else chunk
+            audio, elapsed = _run_standard(chunk_text, speaker_id)
+            total_elapsed += elapsed
+
+            if audio is None or len(audio) == 0:
+                yield None, f"⚠️ Không tạo được audio cho đoạn {idx}.", None
+                return
+
+            audios.append(audio)
+
     except Exception as exc:
         yield None, f"❌ Lỗi khi suy luận: {exc}", None
         return
 
-    if audio is None or len(audio) == 0:
+    if not audios:
         yield None, "⚠️ Không tạo được audio đầu ra.", None
         return
 
-    wav_path = _save_audio(audio)
-    duration = len(audio) / SAMPLE_RATE
-    status = f"✅ Hoàn tất sau {elapsed:.2f}s | Độ dài audio: {duration:.1f}s"
+    # Ghép các đoạn audio liên tiếp
+    audio_full = np.concatenate(audios)
+    wav_path = _save_audio(audio_full)
+    duration = len(audio_full) / SAMPLE_RATE
+    status = (
+        f"✅ Hoàn tất sau {total_elapsed:.2f}s | "
+        f"Độ dài audio: {duration:.1f}s | Số đoạn: {len(raw_chunks)}"
+    )
     yield wav_path, status, wav_path
 
 
@@ -102,10 +191,13 @@ def build_interface():
         )
 
         text_input = gr.Textbox(
-            label="📝 Nội dung (tối đa 250 ký tự)",
+            label=f"📝 Nội dung (tối đa {MAX_TEXT_LEN} ký tự)",
             placeholder="Nhập văn bản cần chuyển thành giọng nói...",
-            lines=4,
-            value="Khi bạn kề vai sát cánh cùng đồng đội của mình, bạn có thể làm nên những điều phi thường.",
+            lines=6,
+            value=(
+                "Khi bạn kề vai sát cánh cùng đồng đội của mình, "
+                "bạn có thể làm nên những điều phi thường."
+            ),
         )
 
         speaker_dropdown = gr.Dropdown(
