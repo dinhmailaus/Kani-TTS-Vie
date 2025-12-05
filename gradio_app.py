@@ -58,16 +58,58 @@ def _split_text_by_punctuation(text: str, max_chunk_len: int) -> List[str]:
     Tách văn bản thành các đoạn nhỏ dựa trên dấu câu.
     Ưu tiên ngắt theo . ! ? ; : … Sau đó gom lại sao cho mỗi đoạn <= max_chunk_len.
     Nếu vẫn quá dài, fallback chia theo từ (word-based) để tránh cắt giữa từ.
+    Xử lý đúng dấu nháy kép trong đối thoại để không cắt mất dấu nháy.
     """
     text = text.strip()
     if not text:
         return []
 
-    # Tách sơ bộ theo câu, giữ lại dấu câu ở cuối câu
-    # Ví dụ: "Xin chào. Bạn khỏe không?" -> ["Xin chào.", "Bạn khỏe không?"]
-    sentence_end_re = re.compile(r"([^.!?;:…]+[.!?;:…]|\S+\s*$)", re.UNICODE)
-    sentences = [m.group(0).strip() for m in sentence_end_re.finditer(text)]
-
+    # Tách văn bản thành các câu, xử lý đúng dấu nháy kép
+    sentences = []
+    i = 0
+    
+    while i < len(text):
+        # Tìm dấu câu tiếp theo
+        match = re.search(r'[.!?;:…]', text[i:])
+        if not match:
+            # Phần còn lại
+            remaining = text[i:].strip()
+            if remaining:
+                sentences.append(remaining)
+            break
+        
+        pos = i + match.start()
+        
+        # Kiểm tra xem có dấu nháy đóng ngay trước dấu câu không
+        has_close_quote_before = (pos > 0 and text[pos-1] == '"')
+        
+        # Tìm vị trí kết thúc câu (sau dấu câu + khoảng trắng)
+        # Nếu có dấu nháy đóng trước, đảm bảo giữ nó trong câu
+        end_pos = pos + 1
+        
+        # Tìm khoảng trắng tiếp theo
+        space_match = re.search(r'\s+', text[end_pos:])
+        if space_match:
+            end_pos = end_pos + space_match.end()
+        
+        # Nếu có dấu nháy đóng trước dấu câu, đảm bảo nó được bao gồm
+        if has_close_quote_before:
+            # Đảm bảo dấu nháy đóng được bao gồm trong câu
+            sentence_start = i
+            # Tìm dấu nháy mở tương ứng (tìm ngược lại)
+            quote_open_pos = text.rfind('"', sentence_start, pos-1)
+            if quote_open_pos >= sentence_start:
+                # Có dấu nháy mở, câu bắt đầu từ đó
+                sentence = text[sentence_start:end_pos].strip()
+            else:
+                sentence = text[sentence_start:end_pos].strip()
+        else:
+            sentence = text[i:end_pos].strip()
+        
+        if sentence:
+            sentences.append(sentence)
+        i = end_pos
+    
     if not sentences:
         sentences = [text]
 
