@@ -57,7 +57,7 @@ def _split_text_by_punctuation(text: str, max_chunk_len: int) -> List[str]:
     """
     Tách văn bản thành các đoạn nhỏ dựa trên dấu câu.
     Ưu tiên ngắt theo . ! ? ; : … Sau đó gom lại sao cho mỗi đoạn <= max_chunk_len.
-    Nếu vẫn quá dài (ít dấu câu), fallback chia theo độ dài cố định.
+    Nếu vẫn quá dài, fallback chia theo từ (word-based) để tránh cắt giữa từ.
     """
     text = text.strip()
     if not text:
@@ -74,33 +74,43 @@ def _split_text_by_punctuation(text: str, max_chunk_len: int) -> List[str]:
     chunks: List[str] = []
     current = ""
 
+    def flush_buffer():
+        nonlocal current
+        if current:
+            chunks.append(current.strip())
+            current = ""
+
     for sent in sentences:
         if not sent:
             continue
 
-        # Nếu câu đơn đã dài hơn max_chunk_len thì cắt cứng theo độ dài
+        # Nếu câu đơn đã dài hơn max_chunk_len thì chia theo từ
         if len(sent) > max_chunk_len:
-            if current:
-                chunks.append(current.strip())
-                current = ""
-            for i in range(0, len(sent), max_chunk_len):
-                sub = sent[i : i + max_chunk_len].strip()
-                if sub:
-                    chunks.append(sub)
+            flush_buffer()
+            words = sent.split()
+            temp = ""
+            for word in words:
+                candidate = f"{temp} {word}".strip() if temp else word
+                if len(candidate) > max_chunk_len and temp:
+                    chunks.append(temp.strip())
+                    temp = word
+                else:
+                    temp = candidate
+            if temp:
+                chunks.append(temp.strip())
             continue
 
+        # Gom các câu ngắn lại
         if not current:
             current = sent
         elif len(current) + 1 + len(sent) <= max_chunk_len:
             current = f"{current} {sent}"
         else:
-            chunks.append(current.strip())
+            flush_buffer()
             current = sent
 
-    if current:
-        chunks.append(current.strip())
-
-    return chunks
+    flush_buffer()
+    return [chunk for chunk in chunks if chunk]
 
 
 # --- Main synthesis ---
