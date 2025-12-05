@@ -22,7 +22,6 @@ SPEAKER_CHOICES = [
 ]
 
 # --- Text limits ---
-MAX_TEXT_LEN = 8000          # tối đa 8000 ký tự cho toàn bộ input
 MAX_CHARS_PER_CHUNK = 250    # mỗi đoạn gửi vào mô hình
 
 
@@ -108,31 +107,30 @@ def _split_text_by_punctuation(text: str, max_chunk_len: int) -> List[str]:
 def synthesize(text: str, speaker_label: str, normalize: bool = True):
     text = (text or "").strip()
     if not text:
-        yield None, "⚠️ Vui lòng nhập nội dung.", None
-        return
-
-    if len(text) > MAX_TEXT_LEN:
-        yield None, f"⚠️ Văn bản quá dài ({len(text)} ký tự). Giới hạn là {MAX_TEXT_LEN} ký tự.", None
+        yield None, "⚠️ Vui lòng nhập nội dung.", None, ""
         return
 
     speaker_id = dict(SPEAKER_CHOICES).get(speaker_label, None)
 
     # --- mô phỏng tiến trình ---
-    yield None, "⏳ Đang xử lý văn bản...", None
+    yield None, "⏳ Đang xử lý văn bản...", None, ""
     time.sleep(0.8)
 
     # Tách văn bản thành các đoạn theo dấu câu
     raw_chunks = _split_text_by_punctuation(text, MAX_CHARS_PER_CHUNK)
     if not raw_chunks:
-        yield None, "⚠️ Không tìm thấy nội dung hợp lệ sau khi xử lý.", None
+        yield None, "⚠️ Không tìm thấy nội dung hợp lệ sau khi xử lý.", None, ""
         return
 
-    if len(raw_chunks) == 1:
-        status_msg = "🎧 Đang tạo giọng nói (1 đoạn)..."
-    else:
-        status_msg = f"🎧 Đang tạo giọng nói ({len(raw_chunks)} đoạn)..."
+    # Tạo text hiển thị các đoạn đã ngắt
+    chunks_display = "\n\n".join([f"Đoạn {i}: {chunk}" for i, chunk in enumerate(raw_chunks, 1)])
 
-    yield None, status_msg, None
+    if len(raw_chunks) == 1:
+        status_msg = "🎧 Đang tạo giọng nói (đoạn 1/1)..."
+    else:
+        status_msg = f"🎧 Đang tạo giọng nói (đoạn 1/{len(raw_chunks)})..."
+
+    yield None, status_msg, None, chunks_display
     time.sleep(0.5)
 
     audios = []
@@ -140,22 +138,29 @@ def synthesize(text: str, speaker_label: str, normalize: bool = True):
 
     try:
         for idx, chunk in enumerate(raw_chunks, start=1):
+            # Cập nhật trạng thái tiến trình từng đoạn
+            if len(raw_chunks) == 1:
+                status_msg = "🎧 Đang tạo giọng nói (đoạn 1/1)..."
+            else:
+                status_msg = f"🎧 Đang tạo giọng nói (đoạn {idx}/{len(raw_chunks)})..."
+            yield None, status_msg, None, chunks_display
+
             chunk_text = NORMALIZER.normalize(chunk) if normalize else chunk
             audio, elapsed = _run_standard(chunk_text, speaker_id)
             total_elapsed += elapsed
 
             if audio is None or len(audio) == 0:
-                yield None, f"⚠️ Không tạo được audio cho đoạn {idx}.", None
+                yield None, f"⚠️ Không tạo được audio cho đoạn {idx}.", None, chunks_display
                 return
 
             audios.append(audio)
 
     except Exception as exc:
-        yield None, f"❌ Lỗi khi suy luận: {exc}", None
+        yield None, f"❌ Lỗi khi suy luận: {exc}", None, chunks_display
         return
 
     if not audios:
-        yield None, "⚠️ Không tạo được audio đầu ra.", None
+        yield None, "⚠️ Không tạo được audio đầu ra.", None, chunks_display
         return
 
     # Ghép các đoạn audio liên tiếp
@@ -166,7 +171,7 @@ def synthesize(text: str, speaker_label: str, normalize: bool = True):
         f"✅ Hoàn tất sau {total_elapsed:.2f}s | "
         f"Độ dài audio: {duration:.1f}s | Số đoạn: {len(raw_chunks)}"
     )
-    yield wav_path, status, wav_path
+    yield wav_path, status, wav_path, chunks_display
 
 
 # --- Build simple Gradio UI ---
@@ -190,14 +195,31 @@ def build_interface():
             """
         )
 
+        default_text = (
+            "Khi bạn kề vai sát cánh cùng đồng đội của mình, "
+            "bạn có thể làm nên những điều phi thường."
+        )
+
         text_input = gr.Textbox(
-            label=f"📝 Nội dung (tối đa {MAX_TEXT_LEN} ký tự)",
+            label="📝 Nội dung",
             placeholder="Nhập văn bản cần chuyển thành giọng nói...",
             lines=6,
-            value=(
-                "Khi bạn kề vai sát cánh cùng đồng đội của mình, "
-                "bạn có thể làm nên những điều phi thường."
-            ),
+            value=default_text,
+        )
+
+        char_count = gr.Markdown(
+            value=f"📊 Số ký tự: **{len(default_text):,}**",
+            elem_classes=["char-count"]
+        )
+
+        def update_char_count(text):
+            count = len(text) if text else 0
+            return f"📊 Số ký tự: **{count:,}**"
+
+        text_input.change(
+            fn=update_char_count,
+            inputs=[text_input],
+            outputs=[char_count],
         )
 
         speaker_dropdown = gr.Dropdown(
@@ -210,11 +232,17 @@ def build_interface():
         status_output = gr.Markdown(label="Trạng thái")
         audio_output = gr.Audio(label="🔊 Kết quả", autoplay=False)
         download_output = gr.File(label="💾 Tải WAV")
+        chunks_output = gr.Textbox(
+            label="📋 Các đoạn đã ngắt (để kiểm tra)",
+            lines=10,
+            interactive=False,
+            placeholder="Các đoạn văn bản đã được tách sẽ hiển thị ở đây sau khi bấm 'Tạo giọng nói'...",
+        )
 
         run_button.click(
             fn=synthesize,
             inputs=[text_input, speaker_dropdown],
-            outputs=[audio_output, status_output, download_output],
+            outputs=[audio_output, status_output, download_output, chunks_output],
         )
 
         gr.Examples(
